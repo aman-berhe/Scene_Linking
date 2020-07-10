@@ -1,0 +1,37 @@
+Check
+1. codes to compute pair wise resulsts (pairwiseRP())
+2. check uuperdigaonal= False for rec, prec, f1 (linkarrayPR) of evaluation results
+3. It is also good idea to check the counting TP,TN,FP,FN
+
+
+RESULTS WITH SUB STORIES :
+online  clustering for sub stories: Done
+    online clustering of clutsers which are clustered ysing online clustering
+Including other features to group scene in one cluster as sub story groups: TO BE DONE
+    1. using entities for clustering scene inside online clustered clusters
+    2. using keywords for clustering scene inside online clustered clusters
+    3. introduce locations from jeffery lancaster datase
+
+
+
+ DATAFRAME LOCATIONS
+ scenes_loc=loc_df['Scene Location'][(loc_df.Season==1) & (loc_df.Episode==1)].tolist()
+ scene_time=loc_df['Scene Start'][(loc_df.Season==1) & (loc_df.Episode==1)].tolist()
+ scenes_norm=normDF.Scene_Start[(normDF.Season==1)& (normDF.Episode==1)].tolist()
+ scenes_norm.insert(0,0.0)
+
+ scenes_starts=[]
+ for i in scene_time:
+    spltd_time=i.split(':')
+    sceneTime=int(spltd_time[0])*3600+int(spltd_time[1])*60+int(spltd_time[2])
+    scenes_starts.append(sceneTime)
+
+    for i in range(1,len(scenes_norm)):
+        a = ut.getPosition(scenes_starts, scenes_norm[i-1])
+        b = ut.getPosition(scenes_starts, scenes_norm[i])
+        if a!=b:
+            print(a,b)
+            print(i,set(scenes_loc[a:b]))
+        else:
+            print(a, b)
+            print("Heres we are",i, scenes_loc[a])

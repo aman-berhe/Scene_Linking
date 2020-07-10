@@ -1,0 +1,202 @@
+import Embeddings as emb
+import pandas as pd
+import numpy as np
+import utility as ut
+import clustering
+import Evaluations as ev
+normDF=pd.read_csv('/home/berhe/Desktop/Scene_Linking_Project/Data/Scene_Dataset_Normalized.csv')
+referenceArray=np.load('Data/reference_array_stories.npy')
+referenceArray_sub=np.load('Data/reference_array_sub_stories.npy')
+sceneTranscripts=normDF['Scene_Texts'].tolist()
+
+To get Embeddings:
+sp_char=getSpeakingCharacters(normDF)
+entities_nrml=ut.getNormalizedEntities(normDF)
+entities=ut.getEntities(dataframe)#the dataframe is the old datafarame
+w_sp_ch_lines=np.load('Data/Wieghted_Speaking_Charcters_lines.npy')
+w_sp_ch_words=np.load('Data/Wieghted_Speaking_Charcters_words.npy')
+doc2vec=np.load('Data/Scene_Doc2Vec_Embedding.npy')
+tfidfVect,featName=emb.tfidfSklearn(sceneTranscripts,stem=True)
+
+"""
+sp_char=emb.getSpeakingCharacters(normDF)
+entities_nrml=ut.getNormalizedEntities(normDF)
+w_sp_ch_lines=np.load('Data/Wieghted_Speaking_Charcters_lines.npy')
+w_sp_ch_words=np.load('Data/Wieghted_Speaking_Charcters_words.npy')
+
+sceneTranscripts=normDF['Scene_Texts'].tolist()
+scene_text_tfidf,featName=emb.tfidfSklearn(sceneTranscripts,stem=True)
+doc2vec=np.load('Data/Scene_Doc2Vec_Embedding.npy')
+d2v_bert=np.load('Data/dataset_D2V_embedding.npy')
+"""
+
+
+
+scenesRelated,linkArrayComputed=ut.cluster_postprecsess(algo,cluster_num,data,dataframe,simThreshold=0.5)
+ref_array_stories, ref_array_Substories=getLinkedDFNew(normDF)
+cltrAlgos=['hc','ag','fa','km','sp','fcm','fcm2','fuzzy']
+
+
+RESULTS:
+ getting the best row from data frame:
+ bestRow=df.iloc[df.Precision.tolist().index(max(df.Precision.tolist()))].tolist()
+
+
+ ONLINE CLUSTERING::
+import numpy as np
+import utility as ut
+import Embeddings as emb
+import Save_Results as sr
+import load_features as lf
+import onlineClustering as oc
+import Evaluations as ev
+normDF=pd.read_csv('/home/berhe/Desktop/Scene_Linking_Project/Data/Scene_Dataset_Normalized.csv')
+ref_array_stories, ref_array_Substories=ut.getLinkedDFNew(normDF)
+rawData=lf.Rawdata()
+simData=lf.Simdata(rawData)
+
+oc.clusterOnline(rawData,ref_array_stories,ref_array_Substories)
+
+
+Granularity:
+dfGran,start,end=ut.getGranularity(normDF,season=1,episode=1)
+rawData_gran=lf.Rawdata_Gran(dfGran,start,end)
+simData_Gran=lf.Simdata(rawData_gran)
+groundTruth_gran=lf.Groundtruth(dfGran)
+
+algos_full=['agglomerative','kmeans','specteral','fcluster','skfuzzy']
+attributes=[]
+for attr, _ in simData_Gran.__dict__.items():
+    attributes.append(attr)
+
+for attr, value in simData_Gran.__dict__.items():
+    print(attr)
+    for alg in algos_full:
+        filename=attr+'_Gran_'+alg
+        sr.featureResults(value,dfGran,filename,groundTruth_gran.ref_link_stories,groundTruth_gran.ref_link_substorie,groundTruth_gran.ref_first_n_link,algo=alg)
+
+oc.onlineCl_res(rawData_gran,groundTruth_gran.ref_link_stories,groundTruth_gran.ref_link_substorie,groundTruth_gran.ref_first_n_link,'Gran_')
+oc.onlineCl_pairwise_res(rawData_gran,groundTruth_gran.scenes_grouped_stories,groundTruth_gran.scenes_grouped_substories,groundTruth_gran.scenes_grouped_first_n_links,'Gran_')
+
+
+PRINTING RESULTS FOR LATEX:
+df=pd.read_csv('Results/best_d2v_bertGran_.csv')
+for i in range(len(df)):
+    print("{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {}\\\\".format(algos_full[i],df.clstr_num[i],df.Recall[i],df.Precision[i],df['F1_score'][i],df.Recall_sub[i],df.Precision_sub[i],df['F1_score_sub'][i],df.Recall_n[i],df.Precision_n[i],df['F1_score_n'][i]))
+    print('\hline')
+
+
+CREATING LINKS:
+***************************************************
+clsCenters=[]
+clsScenes=[]
+episodeLength=[]
+storyGroups=[]
+episidelinks=[]
+thr=[0.6,0.5]
+for s in range(1,2):
+    for e in range(1,3):
+        dfGran, start, end = ut.getGranularity(normDF, season=s, episode=e)
+        rawData_gran = lf.Rawdata_Gran(dfGran, start, end)
+        simData_Gran = lf.Simdata(rawData_gran)
+        groundTruth_gran = lf.Groundtruth_gran(dfGran)
+        clstrCenters, clstrFeatures, clstrSceneNum, leng=cr=cl.getepisodeOnlineClusters(normDF,s,e,'sp_char',thr[e-1])
+        linkArrayComputed = ut.get_adjucencyMat(clstrSceneNum, dfGran.shape[0])
+        rec, pre, f1, acc = ev.linkingArrayRP(linkArrayComputed, groundTruth_gran.ref_link_stories, upperDiagonal=False)
+        recT, preT, f1T, acc = ev.linkingArrayRP(linkArrayComputed, groundTruth_gran.ref_link_stories, upperDiagonal=True)
+        print(rec,pre,f1,recT, preT, f1T)
+        unique_links,linkedArray_rec=ut.get_recursiveLinks_unique(dfGran)
+        episidelinks.append(unique_links)
+        storiesGrouped, substoriesGrouped, stories, substories = ut.storywise_group(dfGran)
+        storyGroups.append(storiesGrouped)
+        episodeLength.append(leng)
+        clsScenes.append(clstrSceneNum)
+        clsCenters.append(clstrCenters)
+
+unique_links,linkedArray_rec=ut.get_recursiveLinks_unique(normDF)
+storiesGrouped,substoriesGrouped,stories,substories=ut.storywise_group(normDF)
+clstrCenters, clstrFeatures, clstrSceneNum=oc.clusterOnline(rawData.sp_char,0.6)
+
+#Ground truth pair links b/n episodes
+
+clear_pair=getpairedlinks_2_episodes(normDF,unique_links,1,1)
+
+cltr_data = []
+for i in episodes_clusters:
+    cltr_data.append(ut.get_spcific_rawData(rawData, i))
+    cltr_data = [i for sublist in cltr_data for i in sublist]
+    clstrs = [i for sublist in episodes_clusters for i in sublist]
+
+
+ before Linking:
+ episodes_rec=[item for sublist in episidelinks for item in sublist]
+ storyGroups=[item for sublist in storyGroups for item in sublist]
+ computedCluster=[item for sublist in clsScenes for item in sublist]
+
+cluster_pairLinks=[]
+for c1 in range(len(cltr_data)):
+    for c2 in range(len(cltr_data1)):
+        #print(len(c1))
+        scene_pair_link=cl.create_cluster_link(cltr_data[c1], cltr_data1[c2], threshold=0.9)
+        if scene_pair_link:
+            cluster_pairLinks.append(clstrs[c1]+clstrs1[c2])
+
+ Pair Linking
+ unique_links,linkedArray_rec=ut.get_recursiveLinks_unique(normDF)
+ storiesGrouped,substoriesGrouped,stories,substories=ut.storywise_group(normDF)
+ clstrCenters, clstrFeatures, clstrSceneNum=oc.clusterOnline(rawData.sp_char,0.6)
+
+ clear_pair_rec,link_bn_eps_rec=ut.getpairedlinks_2_episodes(normDF,unique_links,season=1,episode=1)
+ clear_pair_story,link_bn_eps_story=ut.getpairedlinks_2_episodes(normDF,storiesGrouped,season=1,episode=1)
+ clear_pair_comp,link_bn_eps=ut.getpairedlinks_2_episodes(normDF,cluster_pairLinks,season=1,episode=1)
+
+ for results:
+ episodes_rec_links=episodes_rec+clear_pair_rec
+ storyGroups_link=storyGroups+clear_pair_story
+ computedCluster_links=computedCluster+clear_pair_comp
+
+ linkArrayComputed = ut.get_adjucencyMat(cluste_pairLinks,episodeLength[1]+episodeLength[2])
+ linkArrayRecursive = ut.get_adjucencyMat(episodes_recç_links, episodeLength[1]+episodeLength[2])
+ linkArrayStory = ut.get_adjucencyMat(storyGroups_link, episodeLength[1]+episodeLength[2])
+ rec, pre, f1, acc = ev.linkingArrayRP(linkArrayComputed, linkArrayRecursive, upperDiagonal=False)
+ recT, preT, f1T, acc = ev.linkingArrayRP(linkArrayComputed, linkArrayRecursive, upperDiagonal=True)
+ print(rec,pre,f1,recT, preT, f1T)
+ rec, pre, f1, acc = ev.linkingArrayRP(linkArrayComputed, linkArrayStory, upperDiagonal=False)
+ recT, preT, f1T, acc = ev.linkingArrayRP(linkArrayComputed, linkArrayStory, upperDiagonal=True)
+ print(rec,pre,f1,recT, preT, f1T)
+
+
+
+ ******************************CREATING LINKING BASED ON STORIES******************
+
+storiesGrouped,substoriesGrouped,stories,substories=ut.storywise_group(normDF)
+
+sceneGrouped_by_link=[]
+for i in range(len(dataframe)):
+    tmp=[]
+    t=0
+    for j in storiesGrouped:
+        if i in j:
+            print(i,j)
+            ind=j.index(i) - 1
+            if ind>=0:
+                print(i,j[ind])
+                tmp.append(j[ind])
+    sceneGrouped_by_link.append([i]+tmp)
+
+sceneLinks_dataframe=[]
+for i in range(len(sceneGrouped_by_link)):
+    a=""
+    if len(sceneGrouped_by_link[i])==1:
+        print(sceneGrouped_by_link[i][0],"Non")
+        a="Non"
+    elif len(sceneGrouped_by_link[i])==2:
+        a=str(dataframe.Season[sceneGrouped_by_link[i][1]])+'E'+str(dataframe.Episode[sceneGrouped_by_link[i][1]]).zfill(2)+'S'+str(sceneGrouped_by_link[i][1])
+        print(sceneGrouped_by_link[i][0],a)
+    else:
+        for j in sceneGrouped_by_link[i][1:]:
+            print(sceneGrouped_by_link[i][1:])
+            a =a+' '+str(dataframe.Season[j]) + 'E' + str(dataframe.Episode[j]).zfill(2)+'S'+str(j)
+            a=a.strip().replace(' ',',')
+        print(sceneGrouped_by_link[i][0],a)
+    sceneLinks_dataframe.append(a)
